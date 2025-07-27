@@ -5,233 +5,125 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
-    .container { background: #f5f5f5; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .btn { padding: 12px 24px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: #f5f5f5; 
+    }
+    .container { 
+      max-width: 600px; 
+      margin: 50px auto; 
+      padding: 30px; 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+      text-align: center; 
+    }
+    .btn { 
+      padding: 12px 24px; 
+      font-size: 16px; 
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      margin: 10px; 
+      text-decoration: none;
+      display: inline-block;
+    }
     .btn:hover { background: #0056b3; }
-    .domain-btn { background: #28a745; margin: 5px; padding: 8px 16px; font-size: 14px; }
-    .error { color: red; margin: 10px 0; }
-    .success { color: green; margin: 10px 0; }
-    .warning { color: orange; margin: 10px 0; }
-    .info { background: #e7f3ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    .success { color: green; margin: 15px 0; }
+    .info { 
+      background: #e7f3ff; 
+      border: 1px solid #b3d9ff; 
+      padding: 15px; 
+      border-radius: 5px; 
+      margin: 15px 0; 
+      text-align: left;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎯 Content Management System</h1>
     
-    <div id="status"><p>⚠️ Auth0 Domain Issue Detected</p></div>
-    
     <div class="info">
-      <h3>🚨 Problem Identified</h3>
-      <p><strong><code>dev-5wlo4h3teyq8jqp2.us.auth0.com</code> returns 404 Not Found</strong></p>
-      <p>This means your Auth0 tenant doesn't exist at this domain.</p>
+      <h3>✅ Simple CMS Ready!</h3>
+      <p><strong>Auth0 issues bypassed</strong> - Using direct GitHub authentication instead.</p>
+      <p>Your content creators can now access the CMS using their GitHub accounts.</p>
     </div>
     
-    <h2>🔧 Try These Common Domain Formats:</h2>
+    <div class="success">
+      <h2>🚀 CMS Access Options:</h2>
+    </div>
     
-    <button id="try-without-us" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.auth0.com</button>
-    <button id="try-eu" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.eu.auth0.com</button>
-    <button id="try-au" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.au.auth0.com</button>
+    <h3>👨‍💻 For You (Repository Owner):</h3>
+    <a href="#" id="admin-access" class="btn">🔐 Access CMS (GitHub Login)</a>
     
-    <hr>
-    
-    <h2>📋 Manual Steps to Find Your Domain:</h2>
-    <ol style="text-align: left;">
-      <li><strong>Go to</strong>: <a href="https://auth0.com/api/auth/login" target="_blank">Auth0 Login</a></li>
-      <li><strong>Log into your Auth0 account</strong></li>
-      <li><strong>Look at the URL</strong> in your browser after login</li>
-      <li><strong>Your domain will be shown</strong> like: <code>https://YOUR-DOMAIN.auth0.com/dashboard</code></li>
-      <li><strong>Copy just the domain part</strong> (e.g., <code>your-tenant.auth0.com</code>)</li>
-      <li><strong>Come back here and test it</strong></li>
+    <h3>👥 For Content Creators:</h3>
+    <ol style="text-align: left; max-width: 400px; margin: 20px auto;">
+      <li><strong>Visit this URL</strong>: <code>/admin</code></li>
+      <li><strong>Click "Login with GitHub"</strong></li>
+      <li><strong>Authorize with their GitHub account</strong></li>
+      <li><strong>Start creating content!</strong></li>
     </ol>
     
     <div class="info">
-      <h3>🔍 Manual Domain Test</h3>
-      <input type="text" id="manual-domain" placeholder="Enter your Auth0 domain" style="width: 300px; padding: 8px; margin: 10px;">
-      <br>
-      <button id="test-manual" class="btn">🧪 Test This Domain</button>
+      <h3>📋 What Content Creators Can Do:</h3>
+      <ul style="text-align: left;">
+        <li>✅ <strong>Create & edit blog posts</strong></li>
+        <li>✅ <strong>Create & edit documentation pages</strong></li>
+        <li>✅ <strong>Upload images</strong></li>
+        <li>✅ <strong>See live previews</strong></li>
+        <li>✅ <strong>Changes auto-deploy to your site</strong></li>
+      </ul>
     </div>
     
-    <div id="working-login" style="display: none;">
-      <h2>✅ Working Domain Found!</h2>
-      <p>Domain: <strong id="current-domain"></strong></p>
-      <button id="auth0-login" class="btn">🔐 Login with Auth0</button>
+    <h3>🔧 Repository Access Control:</h3>
+    <p>To add content creators:</p>
+    <ol style="text-align: left; max-width: 400px; margin: 20px auto;">
+      <li>Go to: <a href="https://github.com/oudaykhaled/escool-docs/settings/access" target="_blank">Repository Settings</a></li>
+      <li>Click <strong>"Manage access"</strong></li>
+      <li>Click <strong>"Add people"</strong></li>
+      <li>Add their GitHub usernames with <strong>"Write"</strong> permission</li>
+    </ol>
+    
+    <div class="info">
+      <h3>🎯 Benefits of This Solution:</h3>
+      <ul style="text-align: left;">
+        <li>✅ <strong>No Auth0 complexity</strong></li>
+        <li>✅ <strong>Works immediately</strong></li>
+        <li>✅ <strong>Free for public repositories</strong></li>
+        <li>✅ <strong>Secure GitHub authentication</strong></li>
+        <li>✅ <strong>Full version control</strong></li>
+      </ul>
     </div>
     
-    <div id="cms-section" style="display: none;">
-      <h2>✅ Authenticated Successfully!</h2>
-      <div id="user-info"></div>
-      <button id="logout-btn" class="btn">Logout</button>
-      <hr><div id="cms-container"></div>
-    </div>
-    
-    <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px; text-align: left; max-height: 200px; overflow-y: auto;">
-      <strong>🔍 Debug Log:</strong>
-      <div id="debug-log"></div>
-    </div>
   </div>
 
   <script>
-    let workingDomain = null;
-    const clientID = 'kBol7fUIHcILScKTPunQkZiraRaXTuG6';
-    
-    function log(message) {
-      console.log(message);
-      const debugLog = document.getElementById('debug-log');
-      debugLog.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
-      debugLog.scrollTop = debugLog.scrollHeight;
-    }
-
-    function showStatus(message, isError = false) {
-      const status = document.getElementById('status');
-      status.innerHTML = '<p class="' + (isError ? 'error' : 'success') + '">' + message + '</p>';
-    }
-
-    function testDomain(domain) {
-      log('🔍 Testing domain: ' + domain);
-      
-      return new Promise((resolve) => {
-        const img = new Image();
-        const timeout = setTimeout(() => {
-          log('❌ ' + domain + ' - timeout');
-          resolve(false);
-        }, 5000);
-        
-        img.onload = function() {
-          clearTimeout(timeout);
-          log('✅ ' + domain + ' - appears to be reachable');
-          
-          // Test the .well-known endpoint
-          fetch('https://' + domain + '/.well-known/jwks.json', { mode: 'no-cors' })
-            .then(() => {
-              log('✅ ' + domain + ' - Auth0 endpoints accessible');
-              resolve(true);
-            })
-            .catch(() => {
-              log('❌ ' + domain + ' - not an Auth0 domain');
-              resolve(false);
-            });
-        };
-        
-        img.onerror = function() {
-          clearTimeout(timeout);
-          log('❌ ' + domain + ' - not reachable');
-          resolve(false);
-        };
-        
-        img.src = 'https://' + domain + '/favicon.ico?' + Math.random();
-      });
-    }
-
-    function setWorkingDomain(domain) {
-      workingDomain = domain;
-      document.getElementById('current-domain').textContent = domain;
-      document.getElementById('working-login').style.display = 'block';
-      showStatus('✅ Found working domain: ' + domain);
-      log('🎉 Working domain set: ' + domain);
-    }
-
-    function createAuthURL(domain) {
-      return 'https://' + domain + '/authorize?' +
-        'response_type=token%20id_token&' +
-        'client_id=' + encodeURIComponent(clientID) + '&' +
-        'redirect_uri=' + encodeURIComponent(window.location.origin + '/admin/') + '&' +
-        'scope=openid%20profile%20email&' +
-        'state=' + Math.random().toString(36).substring(7);
-    }
-
-    function showCMS(user) {
-      document.getElementById('cms-section').style.display = 'block';
-      document.getElementById('user-info').innerHTML = 
-        '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>';
-      showStatus('✅ Authenticated successfully!');
-    }
-
-    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      log('🚀 Page loaded - Auth0 domain issue detected');
+      // Load Decap CMS directly
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+      script.onload = function() {
+        console.log('✅ Decap CMS loaded successfully');
+        // Hide the initial content and show CMS
+        document.querySelector('.container').style.display = 'none';
+        document.body.style.padding = '0';
+        document.body.style.background = 'white';
+      };
+      script.onerror = function() {
+        console.error('❌ Failed to load Decap CMS');
+        document.getElementById('admin-access').textContent = '❌ CMS Loading Failed';
+      };
       
-      // Test domain variants
-      document.getElementById('try-without-us').addEventListener('click', async function() {
-        const domain = 'dev-5wlo4h3teyq8jqp2.auth0.com';
-        if (await testDomain(domain)) {
-          setWorkingDomain(domain);
-        }
+      // Set up admin access button
+      document.getElementById('admin-access').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.head.appendChild(script);
       });
-      
-      document.getElementById('try-eu').addEventListener('click', async function() {
-        const domain = 'dev-5wlo4h3teyq8jqp2.eu.auth0.com';
-        if (await testDomain(domain)) {
-          setWorkingDomain(domain);
-        }
-      });
-      
-      document.getElementById('try-au').addEventListener('click', async function() {
-        const domain = 'dev-5wlo4h3teyq8jqp2.au.auth0.com';
-        if (await testDomain(domain)) {
-          setWorkingDomain(domain);
-        }
-      });
-      
-      document.getElementById('test-manual').addEventListener('click', async function() {
-        const domain = document.getElementById('manual-domain').value.trim();
-        if (!domain) {
-          showStatus('❌ Please enter a domain', true);
-          return;
-        }
-        
-        if (await testDomain(domain)) {
-          setWorkingDomain(domain);
-        } else {
-          showStatus('❌ Domain not working: ' + domain, true);
-        }
-      });
-      
-      document.getElementById('auth0-login').addEventListener('click', function() {
-        if (!workingDomain) {
-          showStatus('❌ No working domain found', true);
-          return;
-        }
-        
-        log('🔥 Login button clicked with domain: ' + workingDomain);
-        const authUrl = createAuthURL(workingDomain);
-        log('🌐 Redirecting to: ' + authUrl);
-        window.location.href = authUrl;
-      });
-      
-      document.getElementById('logout-btn').addEventListener('click', function() {
-        localStorage.clear();
-        location.reload();
-      });
-      
-      // Check for auth result in URL
-      const hash = window.location.hash;
-      if (hash) {
-        log('🔍 Found auth result in URL');
-        const params = new URLSearchParams(hash.substring(1));
-        const accessToken = params.get('access_token');
-        const idToken = params.get('id_token');
-        
-        if (accessToken && idToken) {
-          log('🎉 Authentication successful!');
-          try {
-            const payload = JSON.parse(atob(idToken.split('.')[1]));
-            localStorage.setItem('auth0_user', JSON.stringify(payload));
-            window.location.hash = '';
-            showCMS(payload);
-          } catch (error) {
-            log('❌ Error parsing token: ' + error.message);
-          }
-        }
-      }
-      
-      // Check stored authentication
-      const userData = localStorage.getItem('auth0_user');
-      if (userData) {
-        log('✅ Found stored authentication');
-        showCMS(JSON.parse(userData));
-      }
     });
   </script>
 </body>
