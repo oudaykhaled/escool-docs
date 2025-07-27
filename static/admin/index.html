@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
     .container { background: #f5f5f5; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -20,16 +18,16 @@
   <div class="container">
     <h1>🎯 Content Management System</h1>
     
-    <div id="status"><p>Initializing authentication...</p></div>
+    <div id="status"><p>Loading authentication system...</p></div>
     
     <div id="login-section" style="display: none;">
       <h2>Please authenticate to access the CMS</h2>
       <button id="auth0-login" class="btn">🔐 Login with Auth0</button>
       <br><br>
       <h3>🔧 Debug Tests:</h3>
-      <button id="test-auth0" class="btn test-btn">Test Auth0 Object</button>
-      <button id="test-config" class="btn test-btn">Test Configuration</button>
-      <button id="test-direct" class="btn test-btn">Direct Auth URL</button>
+      <button id="test-auth0" class="btn test-btn">Test Auth0 SDK</button>
+      <button id="test-manual" class="btn test-btn">Manual Auth URL</button>
+      <button id="reload-sdk" class="btn test-btn">Reload SDK</button>
       <p><small>You need an authorized account to access the content management system.</small></p>
     </div>
     
@@ -48,6 +46,13 @@
 
   <script>
     let auth0;
+    let authConfig = {
+      domain: 'dev-5wlo4h3teyq8jqp2.us.auth0.com',
+      clientID: 'kBol7fUIHcILScKTPunQkZiraRaXTuG6',
+      redirectUri: window.location.origin + '/admin/',
+      responseType: 'token id_token',
+      scope: 'openid profile email'
+    };
     
     function log(message) {
       console.log(message);
@@ -76,35 +81,81 @@
         '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>' +
         '<p><small>User ID: ' + user.sub + '</small></p>';
       showStatus('✅ Authenticated successfully!');
+      loadDecapCMS();
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-      log('🚀 Page loaded, initializing...');
+    function loadDecapCMS() {
+      log('Loading Decap CMS...');
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+      script.onload = function() {
+        log('✅ Decap CMS loaded');
+        document.getElementById('cms-container').innerHTML = '<p>CMS interface loading...</p>';
+      };
+      script.onerror = function() {
+        log('❌ Failed to load Decap CMS');
+      };
+      document.head.appendChild(script);
+    }
+
+    function loadAuth0SDK(callback) {
+      log('🔄 Loading Auth0 SDK...');
       
-      try {
-        if (typeof Auth0 === 'undefined') {
-          throw new Error('Auth0 SDK not loaded');
+      // Try multiple CDN sources
+      const cdnSources = [
+        'https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js',
+        'https://unpkg.com/auth0-js@9.19.0/build/auth0.min.js',
+        'https://cdn.jsdelivr.net/npm/auth0-js@9.19.0/build/auth0.min.js'
+      ];
+      
+      let currentSource = 0;
+      
+      function tryNextSource() {
+        if (currentSource >= cdnSources.length) {
+          log('❌ All Auth0 CDN sources failed');
+          showStatus('Auth0 SDK failed to load from all sources', true);
+          callback(false);
+          return;
         }
         
-        log('✅ Auth0 SDK available');
+        const script = document.createElement('script');
+        script.src = cdnSources[currentSource];
         
-        // Auth0 Configuration  
-        auth0 = new Auth0.WebAuth({
-          domain: 'dev-5wlo4h3teyq8jqp2.us.auth0.com',
-          clientID: 'kBol7fUIHcILScKTPunQkZiraRaXTuG6',
-          redirectUri: window.location.origin + '/admin/',
-          responseType: 'token id_token',
-          scope: 'openid profile email'
-        });
+        script.onload = function() {
+          log('✅ Auth0 SDK loaded from: ' + cdnSources[currentSource]);
+          callback(true);
+        };
         
-        log('✅ Auth0 configured - Domain: dev-5wlo4h3teyq8jqp2.us.auth0.com');
-        log('📍 Redirect URI: ' + window.location.origin + '/admin/');
+        script.onerror = function() {
+          log('❌ Failed to load from: ' + cdnSources[currentSource]);
+          currentSource++;
+          tryNextSource();
+        };
         
-        // Check for authentication result in URL
+        document.head.appendChild(script);
+      }
+      
+      tryNextSource();
+    }
+
+    function initializeAuth0() {
+      log('🔧 Initializing Auth0...');
+      
+      if (typeof Auth0 === 'undefined') {
+        log('❌ Auth0 is still undefined after loading');
+        showStatus('Auth0 SDK failed to initialize', true);
+        showLogin();
+        return;
+      }
+      
+      try {
+        auth0 = new Auth0.WebAuth(authConfig);
+        log('✅ Auth0 WebAuth initialized');
+        
+        // Check for auth result in URL
         const hash = window.location.hash;
         if (hash) {
-          log('🔍 Found hash in URL: ' + hash);
+          log('🔍 Processing auth result...');
           auth0.parseHash(function(err, authResult) {
             if (authResult && authResult.accessToken && authResult.idToken) {
               log('🎉 Authentication successful!');
@@ -115,11 +166,12 @@
               showCMS(authResult.idTokenPayload);
             } else if (err) {
               log('❌ Auth error: ' + JSON.stringify(err));
-              showStatus('Authentication error: ' + (err.error_description || err.error), true);
+              showStatus('Authentication failed: ' + (err.error_description || err.error), true);
               showLogin();
             }
           });
         } else {
+          // Check stored tokens
           const accessToken = localStorage.getItem('auth0_access_token');
           const userData = localStorage.getItem('auth0_user');
           
@@ -127,67 +179,100 @@
             log('✅ Found stored authentication');
             showCMS(JSON.parse(userData));
           } else {
-            log('ℹ️ No authentication found');
+            log('ℹ️ No existing authentication');
             showLogin();
           }
         }
         
-        // Setup login button
-        document.getElementById('auth0-login').addEventListener('click', function() {
-          log('🔥 LOGIN BUTTON CLICKED!');
+      } catch (error) {
+        log('❌ Auth0 initialization error: ' + error.message);
+        showStatus('Auth0 setup failed: ' + error.message, true);
+        showLogin();
+      }
+    }
+
+    function createManualAuthURL() {
+      const authUrl = 'https://' + authConfig.domain + '/authorize?' + 
+        'response_type=' + encodeURIComponent(authConfig.responseType) + '&' +
+        'client_id=' + encodeURIComponent(authConfig.clientID) + '&' +
+        'redirect_uri=' + encodeURIComponent(authConfig.redirectUri) + '&' +
+        'scope=' + encodeURIComponent(authConfig.scope) + '&' +
+        'state=' + Math.random().toString(36).substring(7);
+      return authUrl;
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      log('🚀 Page loaded, initializing...');
+      
+      // Load Auth0 SDK
+      loadAuth0SDK(function(success) {
+        if (success) {
+          initializeAuth0();
+        } else {
+          showLogin();
+        }
+        
+        // Setup event listeners
+        setupEventListeners();
+      });
+    });
+
+    function setupEventListeners() {
+      // Main login button
+      document.getElementById('auth0-login').addEventListener('click', function() {
+        log('🔥 LOGIN BUTTON CLICKED!');
+        
+        if (auth0 && auth0.authorize) {
           try {
             log('📞 Calling auth0.authorize()...');
             auth0.authorize();
-            log('✅ auth0.authorize() called - should redirect soon');
+            log('✅ Auth0 authorize called');
           } catch (error) {
-            log('❌ ERROR calling auth0.authorize(): ' + error.message);
-            showStatus('Login error: ' + error.message, true);
+            log('❌ Auth0.authorize error: ' + error.message);
+            // Fallback to manual URL
+            log('🔄 Falling back to manual URL...');
+            window.location.href = createManualAuthURL();
+          }
+        } else {
+          log('❌ Auth0 not available, using manual URL');
+          window.location.href = createManualAuthURL();
+        }
+      });
+      
+      // Test buttons
+      document.getElementById('test-auth0').addEventListener('click', function() {
+        log('🧪 Testing Auth0 SDK...');
+        log('Auth0 global exists: ' + (typeof Auth0 !== 'undefined'));
+        log('Auth0 instance exists: ' + (typeof auth0 !== 'undefined'));
+        if (auth0) {
+          log('Auth0 authorize function: ' + (typeof auth0.authorize === 'function'));
+        }
+      });
+      
+      document.getElementById('test-manual').addEventListener('click', function() {
+        log('🧪 Testing manual auth URL...');
+        const authUrl = createManualAuthURL();
+        log('Manual URL: ' + authUrl);
+        log('🌐 Opening in new tab...');
+        window.open(authUrl, '_blank');
+      });
+      
+      document.getElementById('reload-sdk').addEventListener('click', function() {
+        log('🔄 Reloading Auth0 SDK...');
+        loadAuth0SDK(function(success) {
+          if (success) {
+            initializeAuth0();
           }
         });
-        
-        // Debug test buttons
-        document.getElementById('test-auth0').addEventListener('click', function() {
-          log('🧪 Testing Auth0 object...');
-          log('Auth0 exists: ' + (typeof auth0 !== 'undefined'));
-          log('Auth0.authorize exists: ' + (auth0 && typeof auth0.authorize === 'function'));
-          if (auth0) {
-            log('Auth0 domain: ' + auth0.domain);
-            log('Auth0 clientID: ' + auth0.clientID);
-          }
-        });
-        
-        document.getElementById('test-config').addEventListener('click', function() {
-          log('🧪 Testing URLs...');
-          log('Current URL: ' + window.location.href);
-          log('Current Origin: ' + window.location.origin);
-          log('Expected redirect: ' + window.location.origin + '/admin/');
-        });
-        
-        document.getElementById('test-direct').addEventListener('click', function() {
-          log('🧪 Testing direct Auth0 URL...');
-          var authUrl = 'https://dev-5wlo4h3teyq8jqp2.us.auth0.com/authorize?' +
-            'response_type=token%20id_token&' +
-            'client_id=kBol7fUIHcILScKTPunQkZiraRaXTuG6&' +
-            'redirect_uri=' + encodeURIComponent(window.location.origin + '/admin/') + '&' +
-            'scope=openid%20profile%20email&' +
-            'state=' + Math.random().toString(36).substring(7);
-          log('Direct URL: ' + authUrl);
-          log('🌐 Opening in new tab...');
-          window.open(authUrl, '_blank');
-        });
-        
-        document.getElementById('logout-btn').addEventListener('click', function() {
-          log('🚪 Logout clicked');
-          localStorage.clear();
-          showLogin();
-        });
-        
-      } catch (error) {
-        log('❌ Init error: ' + error.message);
-        showStatus('Error: ' + error.message, true);
+      });
+      
+      document.getElementById('logout-btn').addEventListener('click', function() {
+        log('🚪 Logout clicked');
+        localStorage.clear();
         showLogin();
-      }
-    });
+      });
+    }
   </script>
 </body>
 </html>
