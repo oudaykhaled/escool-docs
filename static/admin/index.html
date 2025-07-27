@@ -4,9 +4,115 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js"></script>
 </head>
 <body>
-  <!-- Decap CMS (formerly Netlify CMS) -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <div id="auth-container" style="display: none; text-align: center; padding: 50px;">
+    <h2>Content Management System</h2>
+    <p>Please authenticate to access the CMS</p>
+    <button id="auth0-login" style="padding: 10px 20px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Login with Auth0
+    </button>
+  </div>
+  
+  <div id="cms-container" style="display: none;"></div>
+
+  <script>
+    // Auth0 Configuration - Update with your Auth0 details
+    const auth0 = new Auth0.WebAuth({
+      domain: 'dev-5wlo4h3teyq8jqp2.us.auth0.com', // Your Auth0 domain
+      clientID: 'kBol7fUIHcILScKTPunQkZiraRaXTuG6', // Your Auth0 client ID
+      redirectUri: window.location.origin + '/admin/',
+      responseType: 'token id_token',
+      scope: 'openid profile email'
+    });
+
+    // Check if user is already authenticated
+    function checkAuth() {
+      const hash = window.location.hash;
+      if (hash) {
+        auth0.parseHash((err, authResult) => {
+          if (authResult && authResult.accessToken && authResult.idToken) {
+            // Store tokens
+            localStorage.setItem('auth0_access_token', authResult.accessToken);
+            localStorage.setItem('auth0_id_token', authResult.idToken);
+            localStorage.setItem('auth0_user', JSON.stringify(authResult.idTokenPayload));
+            
+            // Clean URL
+            window.location.hash = '';
+            
+            // Load CMS
+            loadCMS();
+          } else if (err) {
+            console.error('Auth error:', err);
+            showLogin();
+          }
+        });
+      } else {
+        // Check if we have stored tokens
+        const accessToken = localStorage.getItem('auth0_access_token');
+        if (accessToken) {
+          loadCMS();
+        } else {
+          showLogin();
+        }
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('auth-container').style.display = 'block';
+      document.getElementById('cms-container').style.display = 'none';
+    }
+
+    function loadCMS() {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('cms-container').style.display = 'block';
+      
+      // Load Decap CMS with custom auth
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+      script.onload = function() {
+        // Configure CMS with Auth0 user info
+        const user = JSON.parse(localStorage.getItem('auth0_user') || '{}');
+        
+        // Custom authentication for Decap CMS
+        if (window.DecapCmsApp) {
+          window.DecapCmsApp.init({
+            config: {
+              backend: {
+                name: 'github',
+                repo: 'oudaykhaled/escool-docs',
+                branch: 'main',
+                // Use a personal access token approach
+                base_url: window.location.origin,
+                auth_endpoint: '/auth'
+              }
+            }
+          });
+        }
+      };
+      document.head.appendChild(script);
+    }
+
+    // Auth0 login
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('auth0-login').addEventListener('click', function() {
+        auth0.authorize();
+      });
+      
+      checkAuth();
+    });
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('auth0_access_token');
+      localStorage.removeItem('auth0_id_token');
+      localStorage.removeItem('auth0_user');
+      auth0.logout({
+        returnTo: window.location.origin + '/admin/'
+      });
+    }
+  </script>
 </body>
 </html>
