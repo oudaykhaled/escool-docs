@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Firebase Auth Test</title>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+    .btn { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .status { margin: 10px; padding: 10px; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h1>🔥 Firebase Auth Test</h1>
+  <div id="status"></div>
+  <button id="test-email" class="btn">Test Email Auth</button>
+  <button id="test-google" class="btn">Test Google Auth</button>
+  
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBmjViOr_3EysKDYJSFur_87TFm_BRvDyw",
+      authDomain: "escool-docs.firebaseapp.com",
+      projectId: "escool-docs",
+      storageBucket: "escool-docs.firebasestorage.app",
+      messagingSenderId: "83322143329",
+      appId: "1:83322143329:web:25be59aa8feb31d47de020"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    
+    function showStatus(msg, error = false) {
+      const div = document.getElementById("status");
+      div.textContent = msg;
+      div.className = "status " + (error ? "error" : "success");
+    }
+    
+    document.getElementById("test-email").onclick = () => {
+      const email = prompt("Email:");
+      const password = prompt("Password:");
+      if (email && password) {
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => showStatus("✅ Email auth works!"))
+          .catch(e => showStatus("❌ " + e.message, true));
+      }
+    };
+    
+    document.getElementById("test-google").onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(() => showStatus("✅ Google auth works!"))
+        .catch(e => showStatus("❌ " + e.message, true));
+    };
+  </script>
+</body>
+</html>
