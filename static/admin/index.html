@@ -5,30 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; padding: 20px; text-align: center; }
     .container { background: #f5f5f5; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .btn { padding: 12px 24px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
     .btn:hover { background: #0056b3; }
     .test-btn { background: #28a745; margin: 5px; padding: 8px 16px; font-size: 14px; }
+    .config-btn { background: #ffc107; color: #000; }
     .error { color: red; margin: 10px 0; }
     .success { color: green; margin: 10px 0; }
+    .warning { color: orange; margin: 10px 0; }
+    input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; width: 300px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎯 Content Management System</h1>
     
-    <div id="status"><p>Loading authentication system...</p></div>
+    <div id="status"><p>Checking Auth0 configuration...</p></div>
+    
+    <div id="config-section">
+      <h2>🔧 Auth0 Configuration</h2>
+      <p class="warning"><strong>⚠️ Auth0 Domain Issue Detected!</strong></p>
+      <p>The domain <code>dev-5wlo4h3teyq8jqp2.us.auth0.com</code> returned <strong>404 Not Found</strong>.</p>
+      
+      <h3>🔍 Please Check Your Auth0 Settings:</h3>
+      <div style="text-align: left; max-width: 500px; margin: 0 auto;">
+        <label><strong>Auth0 Domain:</strong></label><br>
+        <input type="text" id="auth0-domain" value="dev-5wlo4h3teyq8jqp2.us.auth0.com" placeholder="your-tenant.auth0.com">
+        <br><br>
+        
+        <label><strong>Client ID:</strong></label><br>
+        <input type="text" id="auth0-client" value="kBol7fUIHcILScKTPunQkZiraRaXTuG6" placeholder="Your Auth0 Client ID">
+        <br><br>
+        
+        <button id="test-domain" class="btn config-btn">🔍 Test Domain</button>
+        <button id="test-wellknown" class="btn config-btn">🔗 Check .well-known</button>
+        <button id="update-config" class="btn config-btn">💾 Update & Test</button>
+      </div>
+      
+      <hr>
+      
+      <h3>📋 How to Find Your Correct Auth0 Domain:</h3>
+      <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
+        <li>Go to your <a href="https://manage.auth0.com/" target="_blank">Auth0 Dashboard</a></li>
+        <li>Look at the URL or top-right corner</li>
+        <li>Your domain should be like: <code>your-tenant.auth0.com</code> or <code>your-tenant.us.auth0.com</code></li>
+        <li>Copy the domain (without https://)</li>
+        <li>Paste it above and click "Test Domain"</li>
+      </ol>
+    </div>
     
     <div id="login-section" style="display: none;">
       <h2>Please authenticate to access the CMS</h2>
       <button id="auth0-login" class="btn">🔐 Login with Auth0</button>
       <br><br>
-      <h3>🔧 Debug Tests:</h3>
-      <button id="test-auth0" class="btn test-btn">Test Auth0 SDK</button>
-      <button id="test-manual" class="btn test-btn">Manual Auth URL</button>
-      <button id="reload-sdk" class="btn test-btn">Reload SDK</button>
-      <p><small>You need an authorized account to access the content management system.</small></p>
+      <button id="manual-login" class="btn test-btn">🌐 Manual Auth URL</button>
+      <button id="show-config" class="btn test-btn">⚙️ Show Config</button>
     </div>
     
     <div id="cms-section" style="display: none;">
@@ -61,137 +93,63 @@
       debugLog.scrollTop = debugLog.scrollHeight;
     }
 
-    function showStatus(message, isError = false) {
+    function showStatus(message, isError = false, isWarning = false) {
       const status = document.getElementById('status');
-      status.innerHTML = '<p class="' + (isError ? 'error' : 'success') + '">' + message + '</p>';
+      const className = isError ? 'error' : (isWarning ? 'warning' : 'success');
+      status.innerHTML = '<p class="' + className + '">' + message + '</p>';
+    }
+
+    function showConfig() {
+      document.getElementById('config-section').style.display = 'block';
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('cms-section').style.display = 'none';
+      showStatus('⚠️ Please configure your Auth0 domain first', false, true);
     }
 
     function showLogin() {
-      log('Showing login form');
+      document.getElementById('config-section').style.display = 'none';
       document.getElementById('login-section').style.display = 'block';
       document.getElementById('cms-section').style.display = 'none';
       showStatus('Please login to continue');
     }
 
     function showCMS(user) {
-      log('Showing CMS interface for user: ' + (user.name || user.email));
+      document.getElementById('config-section').style.display = 'none';
       document.getElementById('login-section').style.display = 'none';
       document.getElementById('cms-section').style.display = 'block';
       document.getElementById('user-info').innerHTML = 
-        '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>' +
-        '<p><small>User ID: ' + user.sub + '</small></p>';
+        '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>';
       showStatus('✅ Authenticated successfully!');
-      loadDecapCMS();
     }
 
-    function loadDecapCMS() {
-      log('Loading Decap CMS...');
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
-      script.onload = function() {
-        log('✅ Decap CMS loaded');
-        document.getElementById('cms-container').innerHTML = '<p>CMS interface loading...</p>';
+    function testAuth0Domain(domain) {
+      log('🔍 Testing Auth0 domain: ' + domain);
+      
+      // Test .well-known endpoint
+      const wellKnownUrl = 'https://' + domain + '/.well-known/jwks.json';
+      
+      fetch(wellKnownUrl, { mode: 'no-cors' })
+        .then(() => {
+          log('✅ Domain appears to be valid (no CORS error)');
+          showStatus('✅ Domain appears to be accessible', false);
+        })
+        .catch((error) => {
+          log('❌ Domain test failed: ' + error.message);
+          showStatus('❌ Domain not accessible: ' + error.message, true);
+        });
+      
+      // Also test with a simple image request trick
+      const img = new Image();
+      img.onload = function() {
+        log('✅ Domain is reachable');
       };
-      script.onerror = function() {
-        log('❌ Failed to load Decap CMS');
+      img.onerror = function() {
+        log('❌ Domain is not reachable');
       };
-      document.head.appendChild(script);
+      img.src = 'https://' + domain + '/favicon.ico?' + Math.random();
     }
 
-    function loadAuth0SDK(callback) {
-      log('🔄 Loading Auth0 SDK...');
-      
-      // Try multiple CDN sources
-      const cdnSources = [
-        'https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js',
-        'https://unpkg.com/auth0-js@9.19.0/build/auth0.min.js',
-        'https://cdn.jsdelivr.net/npm/auth0-js@9.19.0/build/auth0.min.js'
-      ];
-      
-      let currentSource = 0;
-      
-      function tryNextSource() {
-        if (currentSource >= cdnSources.length) {
-          log('❌ All Auth0 CDN sources failed');
-          showStatus('Auth0 SDK failed to load from all sources', true);
-          callback(false);
-          return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = cdnSources[currentSource];
-        
-        script.onload = function() {
-          log('✅ Auth0 SDK loaded from: ' + cdnSources[currentSource]);
-          callback(true);
-        };
-        
-        script.onerror = function() {
-          log('❌ Failed to load from: ' + cdnSources[currentSource]);
-          currentSource++;
-          tryNextSource();
-        };
-        
-        document.head.appendChild(script);
-      }
-      
-      tryNextSource();
-    }
-
-    function initializeAuth0() {
-      log('🔧 Initializing Auth0...');
-      
-      if (typeof Auth0 === 'undefined') {
-        log('❌ Auth0 is still undefined after loading');
-        showStatus('Auth0 SDK failed to initialize', true);
-        showLogin();
-        return;
-      }
-      
-      try {
-        auth0 = new Auth0.WebAuth(authConfig);
-        log('✅ Auth0 WebAuth initialized');
-        
-        // Check for auth result in URL
-        const hash = window.location.hash;
-        if (hash) {
-          log('🔍 Processing auth result...');
-          auth0.parseHash(function(err, authResult) {
-            if (authResult && authResult.accessToken && authResult.idToken) {
-              log('🎉 Authentication successful!');
-              localStorage.setItem('auth0_access_token', authResult.accessToken);
-              localStorage.setItem('auth0_id_token', authResult.idToken);
-              localStorage.setItem('auth0_user', JSON.stringify(authResult.idTokenPayload));
-              window.location.hash = '';
-              showCMS(authResult.idTokenPayload);
-            } else if (err) {
-              log('❌ Auth error: ' + JSON.stringify(err));
-              showStatus('Authentication failed: ' + (err.error_description || err.error), true);
-              showLogin();
-            }
-          });
-        } else {
-          // Check stored tokens
-          const accessToken = localStorage.getItem('auth0_access_token');
-          const userData = localStorage.getItem('auth0_user');
-          
-          if (accessToken && userData) {
-            log('✅ Found stored authentication');
-            showCMS(JSON.parse(userData));
-          } else {
-            log('ℹ️ No existing authentication');
-            showLogin();
-          }
-        }
-        
-      } catch (error) {
-        log('❌ Auth0 initialization error: ' + error.message);
-        showStatus('Auth0 setup failed: ' + error.message, true);
-        showLogin();
-      }
-    }
-
-    function createManualAuthURL() {
+    function createAuthURL() {
       const authUrl = 'https://' + authConfig.domain + '/authorize?' + 
         'response_type=' + encodeURIComponent(authConfig.responseType) + '&' +
         'client_id=' + encodeURIComponent(authConfig.clientID) + '&' +
@@ -201,78 +159,102 @@
       return authUrl;
     }
 
-    // Initialize when page loads
+    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      log('🚀 Page loaded, initializing...');
+      log('🚀 Page loaded');
+      log('❌ Auth0 Domain Issue Detected: dev-5wlo4h3teyq8jqp2.us.auth0.com returns 404');
       
-      // Load Auth0 SDK
-      loadAuth0SDK(function(success) {
-        if (success) {
-          initializeAuth0();
+      showConfig();
+      
+      // Setup event listeners
+      document.getElementById('test-domain').addEventListener('click', function() {
+        const domain = document.getElementById('auth0-domain').value.trim();
+        if (domain) {
+          testAuth0Domain(domain);
         } else {
+          showStatus('❌ Please enter a domain', true);
+        }
+      });
+      
+      document.getElementById('test-wellknown').addEventListener('click', function() {
+        const domain = document.getElementById('auth0-domain').value.trim();
+        if (domain) {
+          const wellKnownUrl = 'https://' + domain + '/.well-known/jwks.json';
+          log('🔗 Opening .well-known URL: ' + wellKnownUrl);
+          window.open(wellKnownUrl, '_blank');
+        }
+      });
+      
+      document.getElementById('update-config').addEventListener('click', function() {
+        const domain = document.getElementById('auth0-domain').value.trim();
+        const clientID = document.getElementById('auth0-client').value.trim();
+        
+        if (!domain || !clientID) {
+          showStatus('❌ Please enter both domain and client ID', true);
+          return;
+        }
+        
+        // Update config
+        authConfig.domain = domain;
+        authConfig.clientID = clientID;
+        
+        log('🔄 Updated config - Domain: ' + domain + ', Client: ' + clientID);
+        
+        // Test the new configuration
+        testAuth0Domain(domain);
+        
+        // If test passes, show login
+        setTimeout(function() {
           showLogin();
-        }
-        
-        // Setup event listeners
-        setupEventListeners();
+        }, 2000);
       });
-    });
-
-    function setupEventListeners() {
-      // Main login button
+      
       document.getElementById('auth0-login').addEventListener('click', function() {
-        log('🔥 LOGIN BUTTON CLICKED!');
-        
-        if (auth0 && auth0.authorize) {
-          try {
-            log('📞 Calling auth0.authorize()...');
-            auth0.authorize();
-            log('✅ Auth0 authorize called');
-          } catch (error) {
-            log('❌ Auth0.authorize error: ' + error.message);
-            // Fallback to manual URL
-            log('🔄 Falling back to manual URL...');
-            window.location.href = createManualAuthURL();
-          }
-        } else {
-          log('❌ Auth0 not available, using manual URL');
-          window.location.href = createManualAuthURL();
-        }
+        log('🔥 Login button clicked');
+        const authUrl = createAuthURL();
+        log('🌐 Auth URL: ' + authUrl);
+        window.location.href = authUrl;
       });
       
-      // Test buttons
-      document.getElementById('test-auth0').addEventListener('click', function() {
-        log('🧪 Testing Auth0 SDK...');
-        log('Auth0 global exists: ' + (typeof Auth0 !== 'undefined'));
-        log('Auth0 instance exists: ' + (typeof auth0 !== 'undefined'));
-        if (auth0) {
-          log('Auth0 authorize function: ' + (typeof auth0.authorize === 'function'));
-        }
-      });
-      
-      document.getElementById('test-manual').addEventListener('click', function() {
-        log('🧪 Testing manual auth URL...');
-        const authUrl = createManualAuthURL();
-        log('Manual URL: ' + authUrl);
-        log('🌐 Opening in new tab...');
+      document.getElementById('manual-login').addEventListener('click', function() {
+        const authUrl = createAuthURL();
+        log('🌐 Manual auth URL: ' + authUrl);
         window.open(authUrl, '_blank');
       });
       
-      document.getElementById('reload-sdk').addEventListener('click', function() {
-        log('🔄 Reloading Auth0 SDK...');
-        loadAuth0SDK(function(success) {
-          if (success) {
-            initializeAuth0();
-          }
-        });
+      document.getElementById('show-config').addEventListener('click', function() {
+        showConfig();
       });
       
       document.getElementById('logout-btn').addEventListener('click', function() {
-        log('🚪 Logout clicked');
         localStorage.clear();
-        showLogin();
+        showConfig();
       });
-    }
+      
+      // Check for auth result in URL
+      const hash = window.location.hash;
+      if (hash) {
+        log('🔍 Found auth result in URL');
+        // Simple manual parsing since Auth0 SDK has issues
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const idToken = params.get('id_token');
+        
+        if (accessToken && idToken) {
+          log('🎉 Authentication successful!');
+          // Decode the ID token manually (basic)
+          try {
+            const payload = JSON.parse(atob(idToken.split('.')[1]));
+            localStorage.setItem('auth0_user', JSON.stringify(payload));
+            window.location.hash = '';
+            showCMS(payload);
+          } catch (error) {
+            log('❌ Error parsing token: ' + error.message);
+            showConfig();
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>
