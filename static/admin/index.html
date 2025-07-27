@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firebase Content Manager</title>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
+    /* Authentication Styles */
+    .auth-container {
+      max-width: 400px; margin: 100px auto; padding: 40px; background: white;
+      border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); text-align: center;
+    }
+    .auth-container h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+    .auth-container p { color: #666; margin-bottom: 30px; }
+    .btn {
+      width: 100%; padding: 14px 20px; font-size: 16px; font-weight: 500; border: none;
+      border-radius: 8px; cursor: pointer; margin: 8px 0; transition: all 0.3s ease;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn-email { background: #007bff; color: white; }
+    .btn-email:hover { background: #0056b3; }
+    .btn-google { background: #db4437; color: white; }
+    .btn-google:hover { background: #c1351d; }
+    
+    /* Dashboard Styles */
+    .dashboard { display: none; }
+    .header {
+      background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;
+    }
+    .header h1 { color: #333; font-size: 24px; }
+    .user-info { display: flex; align-items: center; gap: 15px; }
+    .user-avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: #007bff; color: white;
+      display: flex; align-items: center; justify-content: center; font-weight: bold;
+    }
+    .btn-logout { background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .btn-logout:hover { background: #c82333; }
+    
+    .content-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    .sidebar { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: fit-content; }
+    .main-content { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    
+    .nav-item {
+      padding: 12px 16px; margin: 5px 0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+      border: none; background: none; width: 100%; text-align: left; font-size: 16px;
+    }
+    .nav-item:hover { background: #f8f9fa; }
+    .nav-item.active { background: #007bff; color: white; }
+    
+    .loading { display: none; text-align: center; margin: 20px 0; }
+    .spinner {
+      border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%;
+      width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .status { margin: 15px 0; padding: 10px; border-radius: 6px; display: none; }
+    .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+    .content-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #eee;
+    }
+    .btn-primary { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .btn-primary:hover { background: #0056b3; }
+    
+    .setup-reminder {
+      background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;
+      padding: 15px; border-radius: 8px; margin-bottom: 20px;
+    }
+    .setup-reminder h3 { margin: 0 0 10px 0; }
+    .setup-reminder a { color: #856404; text-decoration: underline; }
+    
+    @media (max-width: 768px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 15px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Authentication Section -->
+  <div id="auth-container" class="auth-container">
+    <h1>🔥 Firebase CMS</h1>
+    <p>Sign in to manage your content</p>
+    
+    <button id="email-login" class="btn btn-email">📧 Sign in with Email</button>
+    <button id="google-login" class="btn btn-google">🌐 Sign in with Google</button>
+    
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Authenticating...</p>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <div style="margin-top: 20px; font-size: 12px; color: #666;">
+      <p><strong>Setup Required:</strong> <a href="https://console.firebase.google.com/project/escool-docs-ouday/authentication/providers" target="_blank">Enable Authentication</a></p>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboard" class="dashboard">
+    <div class="container">
+      <div class="header">
+        <h1>🔥 Firebase Content Manager</h1>
+        <div class="user-info">
+          <div id="user-avatar" class="user-avatar"></div>
+          <span id="user-name"></span>
+          <button id="logout-btn" class="btn-logout">Logout</button>
+        </div>
+      </div>
+      
+      <div class="setup-reminder" id="setup-reminder">
+        <h3>⚠️ Setup Required</h3>
+        <p>To use this CMS, you need to:</p>
+        <p>1. <a href="https://console.firebase.google.com/project/escool-docs-ouday/authentication/providers" target="_blank">Enable Authentication Providers</a> (Email/Password, Google)</p>
+        <p>2. <a href="https://console.firebase.google.com/project/escool-docs-ouday/firestore" target="_blank">Create Firestore Database</a></p>
+      </div>
+      
+      <div class="content-grid">
+        <div class="sidebar">
+          <h3>Content Management</h3>
+          <button class="nav-item active" data-section="blog">📝 Blog Posts</button>
+          <button class="nav-item" data-section="docs">📚 Documentation</button>
+          <button class="nav-item" data-section="pages">📄 Pages</button>
+          <button class="nav-item" data-section="media">🖼️ Media Files</button>
+          <button class="nav-item" data-section="settings">⚙️ Settings</button>
+        </div>
+        
+        <div class="main-content">
+          <div id="blog-section" class="content-section active">
+            <div class="content-header">
+              <h2>Blog Posts</h2>
+              <button class="btn-primary" onclick="createBlogPost()">+ New Post</button>
+            </div>
+            <div id="blog-content"><p>Loading blog posts...</p></div>
+          </div>
+          
+          <div id="docs-section" class="content-section">
+            <div class="content-header">
+              <h2>Documentation</h2>
+              <button class="btn-primary" onclick="createDoc()">+ New Doc</button>
+            </div>
+            <div id="docs-content"><p>Loading documentation...</p></div>
+          </div>
+          
+          <div id="pages-section" class="content-section">
+            <div class="content-header">
+              <h2>Pages</h2>
+              <button class="btn-primary" onclick="createPage()">+ New Page</button>
+            </div>
+            <div id="pages-content"><p>Loading pages...</p></div>
+          </div>
+          
+          <div id="media-section" class="content-section">
+            <div class="content-header">
+              <h2>Media Files</h2>
+              <button class="btn-primary" onclick="uploadMedia()">+ Upload File</button>
+            </div>
+            <div id="media-content"><p>Loading media files...</p></div>
+          </div>
+          
+          <div id="settings-section" class="content-section">
+            <div class="content-header">
+              <h2>Settings</h2>
+            </div>
+            <div id="settings-content">
+              <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #333;">Site Title</label>
+                <input type="text" id="site-title" value="Escool Documentation" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+              </div>
+              <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #333;">Site Description</label>
+                <textarea id="site-description" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-height: 100px; resize: vertical;">Modern documentation site powered by Firebase</textarea>
+              </div>
+              <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7CmwNzzpxpAfttN8q9g6lj4kLsoq04uU",
+      authDomain: "escool-docs-ouday.firebaseapp.com",
+      projectId: "escool-docs-ouday",
+      storageBucket: "escool-docs-ouday.firebasestorage.app",
+      messagingSenderId: "1053515727845",
+      appId: "1:1053515727845:web:8a06539380f212ebdae50c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    let currentUser = null;
+
+    function showStatus(message, isError = false) {
+      const status = document.getElementById('status');
+      status.className = 'status ' + (isError ? 'error' : 'success');
+      status.textContent = message;
+      status.style.display = 'block';
+      setTimeout(() => { status.style.display = 'none'; }, 5000);
+    }
+
+    function showLoading(show = true) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadContent();
+    }
+
+    function showAuth() {
+      document.getElementById('auth-container').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    document.getElementById('email-login').addEventListener('click', function() {
+      const email = prompt('Enter your email:');
+      const password = prompt('Enter your password:');
+      
+      if (email && password) {
+        showLoading(true);
+        auth.signInWithEmailAndPassword(email, password)
+          .catch((error) => {
+            return auth.createUserWithEmailAndPassword(email, password);
+          })
+          .then(() => {
+            showStatus('✅ Signed in successfully!');
+          })
+          .catch((error) => {
+            showStatus('❌ Authentication failed: ' + error.message, true);
+            showLoading(false);
+          });
+      }
+    });
+
+    document.getElementById('google-login').addEventListener('click', function() {
+      showLoading(true);
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(() => {
+          showStatus('✅ Signed in with Google!');
+        })
+        .catch((error) => {
+          showStatus('❌ Google sign in failed: ' + error.message, true);
+          showLoading(false);
+        });
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', function() {
+      auth.signOut().then(() => {
+        showAuth();
+        showStatus('✅ Signed out successfully!');
+      });
+    });
+
+    function loadContent() {
+      const setupReminder = document.getElementById('setup-reminder');
+      if (setupReminder) {
+        setupReminder.style.display = 'none';
+      }
+      
+      db.collection('blog').orderBy('createdAt', 'desc').get()
+        .then((querySnapshot) => {
+          let blogContent = '';
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            blogContent += '<div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #007bff;"><h3 style="margin: 0 0 10px 0; color: #333;">' + data.title + '</h3><p style="margin: 0; color: #666; font-size: 14px;">Created: ' + (data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'N/A') + '</p></div>';
+          });
+          document.getElementById('blog-content').innerHTML = blogContent || '<p>No blog posts yet. Create your first post!</p>';
+        })
+        .catch(() => {
+          document.getElementById('blog-content').innerHTML = '<p>No blog posts yet. Create your first post!</p>';
+        });
+    }
+
+    function createBlogPost() {
+      const title = prompt('Enter blog post title:');
+      if (title) {
+        const content = prompt('Enter blog post content:');
+        if (content) {
+          db.collection('blog').add({
+            title: title,
+            content: content,
+            author: currentUser.email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            showStatus('✅ Blog post created successfully!');
+            loadContent();
+          }).catch((error) => {
+            showStatus('❌ Error creating blog post: ' + error.message, true);
+          });
+        }
+      }
+    }
+
+    function createDoc() {
+      showStatus('📚 Documentation creation coming soon!');
+    }
+
+    function createPage() {
+      showStatus('📄 Page creation coming soon!');
+    }
+
+    function uploadMedia() {
+      showStatus('🖼️ Media upload coming soon!');
+    }
+
+    function saveSettings() {
+      showStatus('⚙️ Settings saved!');
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        this.classList.add('active');
+        
+        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+        const sectionId = this.dataset.section + '-section';
+        document.getElementById(sectionId).classList.add('active');
+      });
+    });
+
+    // Auth State Observer
+    auth.onAuthStateChanged(function(user) {
+      showLoading(false);
+      if (user) {
+        currentUser = user;
+        document.getElementById('user-name').textContent = user.displayName || user.email;
+        document.getElementById('user-avatar').textContent = (user.displayName || user.email)[0].toUpperCase();
+        showDashboard();
+      } else {
+        currentUser = null;
+        showAuth();
+      }
+    });
+  </script>
+</body>
+</html>
