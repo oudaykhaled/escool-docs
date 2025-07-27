@@ -1,6 +1,5 @@
 backend:
-  name: github
-  repo: oudaykhaled/escool-docs
+  name: git-gateway
   branch: main
 
 media_folder: static/img
