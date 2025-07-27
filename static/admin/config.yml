@@ -1,6 +1,12 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: oudaykhaled/escool-docs
   branch: main
+  # Editorial workflow for content creators
+  open_authoring: true
+
+# This allows external contributors to create pull requests
+publish_mode: editorial_workflow
 
 media_folder: static/img
 public_folder: /img
