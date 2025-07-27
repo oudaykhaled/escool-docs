@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CMS Test</title>
+</head>
+<body>
+    <h1>🔍 CMS Diagnostic Test</h1>
+    
+    <div id="status">Testing...</div>
+    
+    <script>
+        function log(msg) {
+            document.getElementById('status').innerHTML += '<br>' + msg;
+            console.log(msg);
+        }
+        
+        log('✅ Page loaded');
+        log('🔍 Testing Decap CMS load...');
+        
+        // Test loading Decap CMS
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+        
+        script.onload = function() {
+            log('✅ Decap CMS script loaded successfully');
+            log('🔍 Current URL: ' + window.location.href);
+            log('🔍 Config should be at: ' + window.location.origin + '/admin/config.yml');
+            
+            // Test config file
+            fetch('/admin/config.yml')
+                .then(response => {
+                    if (response.ok) {
+                        log('✅ Config file accessible');
+                        return response.text();
+                    } else {
+                        log('❌ Config file not found (404)');
+                    }
+                })
+                .then(config => {
+                    if (config) {
+                        log('✅ Config content preview: ' + config.substring(0, 100) + '...');
+                    }
+                })
+                .catch(err => {
+                    log('❌ Config fetch error: ' + err.message);
+                });
+        };
+        
+        script.onerror = function() {
+            log('❌ Failed to load Decap CMS script');
+        };
+        
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
