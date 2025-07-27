@@ -5,62 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; padding: 20px; text-align: center; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
     .container { background: #f5f5f5; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .btn { padding: 12px 24px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
     .btn:hover { background: #0056b3; }
-    .test-btn { background: #28a745; margin: 5px; padding: 8px 16px; font-size: 14px; }
-    .config-btn { background: #ffc107; color: #000; }
+    .domain-btn { background: #28a745; margin: 5px; padding: 8px 16px; font-size: 14px; }
     .error { color: red; margin: 10px 0; }
     .success { color: green; margin: 10px 0; }
     .warning { color: orange; margin: 10px 0; }
-    input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; width: 300px; }
+    .info { background: #e7f3ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 5px; margin: 15px 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎯 Content Management System</h1>
     
-    <div id="status"><p>Checking Auth0 configuration...</p></div>
+    <div id="status"><p>⚠️ Auth0 Domain Issue Detected</p></div>
     
-    <div id="config-section">
-      <h2>🔧 Auth0 Configuration</h2>
-      <p class="warning"><strong>⚠️ Auth0 Domain Issue Detected!</strong></p>
-      <p>The domain <code>dev-5wlo4h3teyq8jqp2.us.auth0.com</code> returned <strong>404 Not Found</strong>.</p>
-      
-      <h3>🔍 Please Check Your Auth0 Settings:</h3>
-      <div style="text-align: left; max-width: 500px; margin: 0 auto;">
-        <label><strong>Auth0 Domain:</strong></label><br>
-        <input type="text" id="auth0-domain" value="dev-5wlo4h3teyq8jqp2.us.auth0.com" placeholder="your-tenant.auth0.com">
-        <br><br>
-        
-        <label><strong>Client ID:</strong></label><br>
-        <input type="text" id="auth0-client" value="kBol7fUIHcILScKTPunQkZiraRaXTuG6" placeholder="Your Auth0 Client ID">
-        <br><br>
-        
-        <button id="test-domain" class="btn config-btn">🔍 Test Domain</button>
-        <button id="test-wellknown" class="btn config-btn">🔗 Check .well-known</button>
-        <button id="update-config" class="btn config-btn">💾 Update & Test</button>
-      </div>
-      
-      <hr>
-      
-      <h3>📋 How to Find Your Correct Auth0 Domain:</h3>
-      <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
-        <li>Go to your <a href="https://manage.auth0.com/" target="_blank">Auth0 Dashboard</a></li>
-        <li>Look at the URL or top-right corner</li>
-        <li>Your domain should be like: <code>your-tenant.auth0.com</code> or <code>your-tenant.us.auth0.com</code></li>
-        <li>Copy the domain (without https://)</li>
-        <li>Paste it above and click "Test Domain"</li>
-      </ol>
+    <div class="info">
+      <h3>🚨 Problem Identified</h3>
+      <p><strong><code>dev-5wlo4h3teyq8jqp2.us.auth0.com</code> returns 404 Not Found</strong></p>
+      <p>This means your Auth0 tenant doesn't exist at this domain.</p>
     </div>
     
-    <div id="login-section" style="display: none;">
-      <h2>Please authenticate to access the CMS</h2>
+    <h2>🔧 Try These Common Domain Formats:</h2>
+    
+    <button id="try-without-us" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.auth0.com</button>
+    <button id="try-eu" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.eu.auth0.com</button>
+    <button id="try-au" class="btn domain-btn">Try: dev-5wlo4h3teyq8jqp2.au.auth0.com</button>
+    
+    <hr>
+    
+    <h2>📋 Manual Steps to Find Your Domain:</h2>
+    <ol style="text-align: left;">
+      <li><strong>Go to</strong>: <a href="https://auth0.com/api/auth/login" target="_blank">Auth0 Login</a></li>
+      <li><strong>Log into your Auth0 account</strong></li>
+      <li><strong>Look at the URL</strong> in your browser after login</li>
+      <li><strong>Your domain will be shown</strong> like: <code>https://YOUR-DOMAIN.auth0.com/dashboard</code></li>
+      <li><strong>Copy just the domain part</strong> (e.g., <code>your-tenant.auth0.com</code>)</li>
+      <li><strong>Come back here and test it</strong></li>
+    </ol>
+    
+    <div class="info">
+      <h3>🔍 Manual Domain Test</h3>
+      <input type="text" id="manual-domain" placeholder="Enter your Auth0 domain" style="width: 300px; padding: 8px; margin: 10px;">
+      <br>
+      <button id="test-manual" class="btn">🧪 Test This Domain</button>
+    </div>
+    
+    <div id="working-login" style="display: none;">
+      <h2>✅ Working Domain Found!</h2>
+      <p>Domain: <strong id="current-domain"></strong></p>
       <button id="auth0-login" class="btn">🔐 Login with Auth0</button>
-      <br><br>
-      <button id="manual-login" class="btn test-btn">🌐 Manual Auth URL</button>
-      <button id="show-config" class="btn test-btn">⚙️ Show Config</button>
     </div>
     
     <div id="cms-section" style="display: none;">
@@ -70,21 +66,15 @@
       <hr><div id="cms-container"></div>
     </div>
     
-    <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px; text-align: left; max-height: 300px; overflow-y: auto;">
-      <strong>🔍 Debug Info:</strong>
+    <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px; text-align: left; max-height: 200px; overflow-y: auto;">
+      <strong>🔍 Debug Log:</strong>
       <div id="debug-log"></div>
     </div>
   </div>
 
   <script>
-    let auth0;
-    let authConfig = {
-      domain: 'dev-5wlo4h3teyq8jqp2.us.auth0.com',
-      clientID: 'kBol7fUIHcILScKTPunQkZiraRaXTuG6',
-      redirectUri: window.location.origin + '/admin/',
-      responseType: 'token id_token',
-      scope: 'openid profile email'
-    };
+    let workingDomain = null;
+    const clientID = 'kBol7fUIHcILScKTPunQkZiraRaXTuG6';
     
     function log(message) {
       console.log(message);
@@ -93,156 +83,138 @@
       debugLog.scrollTop = debugLog.scrollHeight;
     }
 
-    function showStatus(message, isError = false, isWarning = false) {
+    function showStatus(message, isError = false) {
       const status = document.getElementById('status');
-      const className = isError ? 'error' : (isWarning ? 'warning' : 'success');
-      status.innerHTML = '<p class="' + className + '">' + message + '</p>';
+      status.innerHTML = '<p class="' + (isError ? 'error' : 'success') + '">' + message + '</p>';
     }
 
-    function showConfig() {
-      document.getElementById('config-section').style.display = 'block';
-      document.getElementById('login-section').style.display = 'none';
-      document.getElementById('cms-section').style.display = 'none';
-      showStatus('⚠️ Please configure your Auth0 domain first', false, true);
+    function testDomain(domain) {
+      log('🔍 Testing domain: ' + domain);
+      
+      return new Promise((resolve) => {
+        const img = new Image();
+        const timeout = setTimeout(() => {
+          log('❌ ' + domain + ' - timeout');
+          resolve(false);
+        }, 5000);
+        
+        img.onload = function() {
+          clearTimeout(timeout);
+          log('✅ ' + domain + ' - appears to be reachable');
+          
+          // Test the .well-known endpoint
+          fetch('https://' + domain + '/.well-known/jwks.json', { mode: 'no-cors' })
+            .then(() => {
+              log('✅ ' + domain + ' - Auth0 endpoints accessible');
+              resolve(true);
+            })
+            .catch(() => {
+              log('❌ ' + domain + ' - not an Auth0 domain');
+              resolve(false);
+            });
+        };
+        
+        img.onerror = function() {
+          clearTimeout(timeout);
+          log('❌ ' + domain + ' - not reachable');
+          resolve(false);
+        };
+        
+        img.src = 'https://' + domain + '/favicon.ico?' + Math.random();
+      });
     }
 
-    function showLogin() {
-      document.getElementById('config-section').style.display = 'none';
-      document.getElementById('login-section').style.display = 'block';
-      document.getElementById('cms-section').style.display = 'none';
-      showStatus('Please login to continue');
+    function setWorkingDomain(domain) {
+      workingDomain = domain;
+      document.getElementById('current-domain').textContent = domain;
+      document.getElementById('working-login').style.display = 'block';
+      showStatus('✅ Found working domain: ' + domain);
+      log('🎉 Working domain set: ' + domain);
+    }
+
+    function createAuthURL(domain) {
+      return 'https://' + domain + '/authorize?' +
+        'response_type=token%20id_token&' +
+        'client_id=' + encodeURIComponent(clientID) + '&' +
+        'redirect_uri=' + encodeURIComponent(window.location.origin + '/admin/') + '&' +
+        'scope=openid%20profile%20email&' +
+        'state=' + Math.random().toString(36).substring(7);
     }
 
     function showCMS(user) {
-      document.getElementById('config-section').style.display = 'none';
-      document.getElementById('login-section').style.display = 'none';
       document.getElementById('cms-section').style.display = 'block';
       document.getElementById('user-info').innerHTML = 
         '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>';
       showStatus('✅ Authenticated successfully!');
     }
 
-    function testAuth0Domain(domain) {
-      log('🔍 Testing Auth0 domain: ' + domain);
-      
-      // Test .well-known endpoint
-      const wellKnownUrl = 'https://' + domain + '/.well-known/jwks.json';
-      
-      fetch(wellKnownUrl, { mode: 'no-cors' })
-        .then(() => {
-          log('✅ Domain appears to be valid (no CORS error)');
-          showStatus('✅ Domain appears to be accessible', false);
-        })
-        .catch((error) => {
-          log('❌ Domain test failed: ' + error.message);
-          showStatus('❌ Domain not accessible: ' + error.message, true);
-        });
-      
-      // Also test with a simple image request trick
-      const img = new Image();
-      img.onload = function() {
-        log('✅ Domain is reachable');
-      };
-      img.onerror = function() {
-        log('❌ Domain is not reachable');
-      };
-      img.src = 'https://' + domain + '/favicon.ico?' + Math.random();
-    }
-
-    function createAuthURL() {
-      const authUrl = 'https://' + authConfig.domain + '/authorize?' + 
-        'response_type=' + encodeURIComponent(authConfig.responseType) + '&' +
-        'client_id=' + encodeURIComponent(authConfig.clientID) + '&' +
-        'redirect_uri=' + encodeURIComponent(authConfig.redirectUri) + '&' +
-        'scope=' + encodeURIComponent(authConfig.scope) + '&' +
-        'state=' + Math.random().toString(36).substring(7);
-      return authUrl;
-    }
-
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      log('🚀 Page loaded');
-      log('❌ Auth0 Domain Issue Detected: dev-5wlo4h3teyq8jqp2.us.auth0.com returns 404');
+      log('🚀 Page loaded - Auth0 domain issue detected');
       
-      showConfig();
+      // Test domain variants
+      document.getElementById('try-without-us').addEventListener('click', async function() {
+        const domain = 'dev-5wlo4h3teyq8jqp2.auth0.com';
+        if (await testDomain(domain)) {
+          setWorkingDomain(domain);
+        }
+      });
       
-      // Setup event listeners
-      document.getElementById('test-domain').addEventListener('click', function() {
-        const domain = document.getElementById('auth0-domain').value.trim();
-        if (domain) {
-          testAuth0Domain(domain);
-        } else {
+      document.getElementById('try-eu').addEventListener('click', async function() {
+        const domain = 'dev-5wlo4h3teyq8jqp2.eu.auth0.com';
+        if (await testDomain(domain)) {
+          setWorkingDomain(domain);
+        }
+      });
+      
+      document.getElementById('try-au').addEventListener('click', async function() {
+        const domain = 'dev-5wlo4h3teyq8jqp2.au.auth0.com';
+        if (await testDomain(domain)) {
+          setWorkingDomain(domain);
+        }
+      });
+      
+      document.getElementById('test-manual').addEventListener('click', async function() {
+        const domain = document.getElementById('manual-domain').value.trim();
+        if (!domain) {
           showStatus('❌ Please enter a domain', true);
-        }
-      });
-      
-      document.getElementById('test-wellknown').addEventListener('click', function() {
-        const domain = document.getElementById('auth0-domain').value.trim();
-        if (domain) {
-          const wellKnownUrl = 'https://' + domain + '/.well-known/jwks.json';
-          log('🔗 Opening .well-known URL: ' + wellKnownUrl);
-          window.open(wellKnownUrl, '_blank');
-        }
-      });
-      
-      document.getElementById('update-config').addEventListener('click', function() {
-        const domain = document.getElementById('auth0-domain').value.trim();
-        const clientID = document.getElementById('auth0-client').value.trim();
-        
-        if (!domain || !clientID) {
-          showStatus('❌ Please enter both domain and client ID', true);
           return;
         }
         
-        // Update config
-        authConfig.domain = domain;
-        authConfig.clientID = clientID;
-        
-        log('🔄 Updated config - Domain: ' + domain + ', Client: ' + clientID);
-        
-        // Test the new configuration
-        testAuth0Domain(domain);
-        
-        // If test passes, show login
-        setTimeout(function() {
-          showLogin();
-        }, 2000);
+        if (await testDomain(domain)) {
+          setWorkingDomain(domain);
+        } else {
+          showStatus('❌ Domain not working: ' + domain, true);
+        }
       });
       
       document.getElementById('auth0-login').addEventListener('click', function() {
-        log('🔥 Login button clicked');
-        const authUrl = createAuthURL();
-        log('🌐 Auth URL: ' + authUrl);
+        if (!workingDomain) {
+          showStatus('❌ No working domain found', true);
+          return;
+        }
+        
+        log('🔥 Login button clicked with domain: ' + workingDomain);
+        const authUrl = createAuthURL(workingDomain);
+        log('🌐 Redirecting to: ' + authUrl);
         window.location.href = authUrl;
-      });
-      
-      document.getElementById('manual-login').addEventListener('click', function() {
-        const authUrl = createAuthURL();
-        log('🌐 Manual auth URL: ' + authUrl);
-        window.open(authUrl, '_blank');
-      });
-      
-      document.getElementById('show-config').addEventListener('click', function() {
-        showConfig();
       });
       
       document.getElementById('logout-btn').addEventListener('click', function() {
         localStorage.clear();
-        showConfig();
+        location.reload();
       });
       
       // Check for auth result in URL
       const hash = window.location.hash;
       if (hash) {
         log('🔍 Found auth result in URL');
-        // Simple manual parsing since Auth0 SDK has issues
         const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get('access_token');
         const idToken = params.get('id_token');
         
         if (accessToken && idToken) {
           log('🎉 Authentication successful!');
-          // Decode the ID token manually (basic)
           try {
             const payload = JSON.parse(atob(idToken.split('.')[1]));
             localStorage.setItem('auth0_user', JSON.stringify(payload));
@@ -250,9 +222,15 @@
             showCMS(payload);
           } catch (error) {
             log('❌ Error parsing token: ' + error.message);
-            showConfig();
           }
         }
+      }
+      
+      // Check stored authentication
+      const userData = localStorage.getItem('auth0_user');
+      if (userData) {
+        log('✅ Found stored authentication');
+        showCMS(JSON.parse(userData));
       }
     });
   </script>
