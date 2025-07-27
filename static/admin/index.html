@@ -7,53 +7,29 @@
   <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0/9.19.0/auth0.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 50px auto;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      background: #f5f5f5;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .btn {
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 10px;
-    }
-    .btn:hover {
-      background: #0056b3;
-    }
-    .error {
-      color: red;
-      margin: 10px 0;
-    }
-    .success {
-      color: green;
-      margin: 10px 0;
-    }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+    .container { background: #f5f5f5; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .btn { padding: 12px 24px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
+    .btn:hover { background: #0056b3; }
+    .test-btn { background: #28a745; margin: 5px; padding: 8px 16px; font-size: 14px; }
+    .error { color: red; margin: 10px 0; }
+    .success { color: green; margin: 10px 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎯 Content Management System</h1>
     
-    <div id="status">
-      <p>Initializing authentication...</p>
-    </div>
+    <div id="status"><p>Initializing authentication...</p></div>
     
     <div id="login-section" style="display: none;">
       <h2>Please authenticate to access the CMS</h2>
       <button id="auth0-login" class="btn">🔐 Login with Auth0</button>
+      <br><br>
+      <h3>🔧 Debug Tests:</h3>
+      <button id="test-auth0" class="btn test-btn">Test Auth0 Object</button>
+      <button id="test-config" class="btn test-btn">Test Configuration</button>
+      <button id="test-direct" class="btn test-btn">Direct Auth URL</button>
       <p><small>You need an authorized account to access the content management system.</small></p>
     </div>
     
@@ -61,21 +37,23 @@
       <h2>✅ Authenticated Successfully!</h2>
       <div id="user-info"></div>
       <button id="logout-btn" class="btn">Logout</button>
-      <hr>
-      <div id="cms-container"></div>
+      <hr><div id="cms-container"></div>
     </div>
     
-    <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px;">
-      <strong>Debug Info:</strong>
+    <div id="debug-info" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 12px; text-align: left; max-height: 300px; overflow-y: auto;">
+      <strong>🔍 Debug Info:</strong>
       <div id="debug-log"></div>
     </div>
   </div>
 
   <script>
+    let auth0;
+    
     function log(message) {
       console.log(message);
       const debugLog = document.getElementById('debug-log');
       debugLog.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+      debugLog.scrollTop = debugLog.scrollHeight;
     }
 
     function showStatus(message, isError = false) {
@@ -98,40 +76,21 @@
         '<p>Welcome, <strong>' + (user.name || user.email) + '</strong>!</p>' +
         '<p><small>User ID: ' + user.sub + '</small></p>';
       showStatus('✅ Authenticated successfully!');
-      
-      // Load the actual CMS
-      loadDecapCMS();
-    }
-
-    function loadDecapCMS() {
-      log('Loading Decap CMS...');
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
-      script.onload = function() {
-        log('Decap CMS loaded successfully');
-        document.getElementById('cms-container').innerHTML = '<p>CMS is loading...</p>';
-      };
-      script.onerror = function() {
-        log('Failed to load Decap CMS');
-        showStatus('Error loading CMS interface', true);
-      };
-      document.head.appendChild(script);
     }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-      log('Page loaded, initializing...');
+      log('🚀 Page loaded, initializing...');
       
       try {
-        // Check if Auth0 is available
         if (typeof Auth0 === 'undefined') {
           throw new Error('Auth0 SDK not loaded');
         }
         
-        log('Auth0 SDK available, setting up...');
+        log('✅ Auth0 SDK available');
         
-        // Auth0 Configuration
-        const auth0 = new Auth0.WebAuth({
+        // Auth0 Configuration  
+        auth0 = new Auth0.WebAuth({
           domain: 'dev-5wlo4h3teyq8jqp2.us.auth0.com',
           clientID: 'kBol7fUIHcILScKTPunQkZiraRaXTuG6',
           redirectUri: window.location.origin + '/admin/',
@@ -139,63 +98,93 @@
           scope: 'openid profile email'
         });
         
-        log('Auth0 configuration set');
+        log('✅ Auth0 configured - Domain: dev-5wlo4h3teyq8jqp2.us.auth0.com');
+        log('📍 Redirect URI: ' + window.location.origin + '/admin/');
         
         // Check for authentication result in URL
         const hash = window.location.hash;
         if (hash) {
-          log('Found hash in URL, parsing authentication result...');
+          log('🔍 Found hash in URL: ' + hash);
           auth0.parseHash(function(err, authResult) {
             if (authResult && authResult.accessToken && authResult.idToken) {
-              log('Authentication successful');
-              // Store tokens
+              log('🎉 Authentication successful!');
               localStorage.setItem('auth0_access_token', authResult.accessToken);
               localStorage.setItem('auth0_id_token', authResult.idToken);
               localStorage.setItem('auth0_user', JSON.stringify(authResult.idTokenPayload));
-              
-              // Clean URL
               window.location.hash = '';
-              
-              // Show CMS
               showCMS(authResult.idTokenPayload);
             } else if (err) {
-              log('Authentication error: ' + (err.error_description || err.error));
+              log('❌ Auth error: ' + JSON.stringify(err));
               showStatus('Authentication error: ' + (err.error_description || err.error), true);
               showLogin();
             }
           });
         } else {
-          // Check if we have stored tokens
           const accessToken = localStorage.getItem('auth0_access_token');
           const userData = localStorage.getItem('auth0_user');
           
           if (accessToken && userData) {
-            log('Found stored authentication');
+            log('✅ Found stored authentication');
             showCMS(JSON.parse(userData));
           } else {
-            log('No authentication found');
+            log('ℹ️ No authentication found');
             showLogin();
           }
         }
         
         // Setup login button
         document.getElementById('auth0-login').addEventListener('click', function() {
-          log('Login button clicked');
-          auth0.authorize();
+          log('🔥 LOGIN BUTTON CLICKED!');
+          try {
+            log('📞 Calling auth0.authorize()...');
+            auth0.authorize();
+            log('✅ auth0.authorize() called - should redirect soon');
+          } catch (error) {
+            log('❌ ERROR calling auth0.authorize(): ' + error.message);
+            showStatus('Login error: ' + error.message, true);
+          }
         });
         
-        // Setup logout button
+        // Debug test buttons
+        document.getElementById('test-auth0').addEventListener('click', function() {
+          log('🧪 Testing Auth0 object...');
+          log('Auth0 exists: ' + (typeof auth0 !== 'undefined'));
+          log('Auth0.authorize exists: ' + (auth0 && typeof auth0.authorize === 'function'));
+          if (auth0) {
+            log('Auth0 domain: ' + auth0.domain);
+            log('Auth0 clientID: ' + auth0.clientID);
+          }
+        });
+        
+        document.getElementById('test-config').addEventListener('click', function() {
+          log('🧪 Testing URLs...');
+          log('Current URL: ' + window.location.href);
+          log('Current Origin: ' + window.location.origin);
+          log('Expected redirect: ' + window.location.origin + '/admin/');
+        });
+        
+        document.getElementById('test-direct').addEventListener('click', function() {
+          log('🧪 Testing direct Auth0 URL...');
+          var authUrl = 'https://dev-5wlo4h3teyq8jqp2.us.auth0.com/authorize?' +
+            'response_type=token%20id_token&' +
+            'client_id=kBol7fUIHcILScKTPunQkZiraRaXTuG6&' +
+            'redirect_uri=' + encodeURIComponent(window.location.origin + '/admin/') + '&' +
+            'scope=openid%20profile%20email&' +
+            'state=' + Math.random().toString(36).substring(7);
+          log('Direct URL: ' + authUrl);
+          log('🌐 Opening in new tab...');
+          window.open(authUrl, '_blank');
+        });
+        
         document.getElementById('logout-btn').addEventListener('click', function() {
-          log('Logout button clicked');
-          localStorage.removeItem('auth0_access_token');
-          localStorage.removeItem('auth0_id_token');
-          localStorage.removeItem('auth0_user');
+          log('🚪 Logout clicked');
+          localStorage.clear();
           showLogin();
         });
         
       } catch (error) {
-        log('Initialization error: ' + error.message);
-        showStatus('Initialization error: ' + error.message, true);
+        log('❌ Init error: ' + error.message);
+        showStatus('Error: ' + error.message, true);
         showLogin();
       }
     });
